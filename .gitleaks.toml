@@ -1,0 +1,32 @@
+# gitleaks configuration for cli-agent-orchestrator (issue #457).
+#
+# Extends gitleaks' built-in rule set via `useDefault` so we stay current with
+# upstream credential detections rather than maintaining our own copy. We only
+# add ALLOWLISTS here, for strings the repo intentionally contains:
+#   - sample credentials that exercise the runtime secret gate
+#     (src/cli_agent_orchestrator/services/secret_gate.py), and
+#   - well-known documentation placeholders.
+#
+# This complements — it does not replace — the runtime redactor in
+# secret_gate.py (which guards memory writes / archive export at runtime). This
+# config gates git content in CI so a real credential can't land on a branch.
+title = "CAO gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Intentional non-secrets: secret-gate test samples and doc placeholders."
+
+# Tests whose job is to contain credential-shaped strings so they can verify
+# the runtime redactor catches/redacts them. These are fixtures, not leaks.
+paths = [
+  '''test/services/test_secret_gate\.py''',
+  '''test/services/test_secret_redaction\.py''',
+]
+
+# Canonical sample tokens that are safe by definition (e.g. AWS's documented
+# example access key). Scoped tightly so real keys are never allowlisted.
+regexes = [
+  '''AKIAIOSFODNN7EXAMPLE''',
+]
